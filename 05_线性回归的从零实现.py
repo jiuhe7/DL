@@ -1,9 +1,7 @@
 import random # 用于随机操作（如打乱数据顺序）
 import torch
 from d2l import torch as d2l# 深度学习工具库（来自《动手学深度学习》），用于绘图等
-from pyexpat import features
 
-from numpy.ma.core import indices
 
 
 def synthetic_data(w,b,num_examples):
@@ -25,7 +23,6 @@ d2l.plt.scatter(features[:,1].detach().numpy(),labels.detach().numpy(),1)
 def data_iter(batch_size,features,labels):
     num_examples=len(features)
     indices=list(range(num_examples))# 生成样本索引（0到999）
-    # 这些样本是随机读取的，没有特定顺序
     random.shuffle(indices)# 打乱索引（随机读取样本，避免顺序影响训练）
     for i in range(0,num_examples,batch_size):
         batch_indices=torch.tensor(indices[i:min(i+batch_size,num_examples)]) # 取当前批量的索引（避免越界）
@@ -38,7 +35,7 @@ for X,y in data_iter(batch_size,features,labels):
 
 # 定义初始化模型
 w=torch.normal(0,0.01,size=(2,1),requires_grad=True)
-b=torch.zeros(1,requires_grad=True)
+b=torch.zeros(1,requires_grad=True)#torch.zeros(1)：创建初始值为 0 的张量
 
 # 定义模型
 def linreg(X,w,b):
