@@ -1,44 +1,33 @@
-# 1. 导入库
-from IPython import display# 用于IPython环境中的动态显示（如动画更新）
 import torch
+from torch import nn
 from d2l import torch as d2l
-
-# 2. 加载数据集
+from IPython import display
+import matplotlib.pyplot as plt
 batch_size=256
 train_iter,test_iter=d2l.load_data_fashion_mnist(batch_size)
-# 3. 定义模型参数
-num_inputs=784
-num_outputs=10
+#初始化模型参数
+num_inputs, num_outputs, num_hiddens = 784, 10, 256
 
-W = torch.normal(0, 0.01, size=(num_inputs, num_outputs), requires_grad=True)
-b=torch.zeros(num_outputs,requires_grad=True)
-# 4. 定义 softmax 函数
-def softmax(X):
-    X_exp=torch.exp(X)
-    partition=X_exp.sum(1,keepdim=True)
-    return X_exp / partition  # 这里应用了广播机制
-# X=torch.normal(0,1,(2,5))
-# X_prob=softmax(X)
+W1 = nn.Parameter(torch.randn(
+    num_inputs, num_hiddens, requires_grad=True) * 0.01)
+b1 = nn.Parameter(torch.zeros(num_hiddens, requires_grad=True))
+W2 = nn.Parameter(torch.randn(
+    num_hiddens, num_outputs, requires_grad=True) * 0.01)
+b2 = nn.Parameter(torch.zeros(num_outputs, requires_grad=True))
 
+params = [W1, b1, W2, b2]
 
-#5. 定义模型
-def net(X):
-    # 将输入X展平（28×28→784维），然后计算线性输出（XW + b），最后通过softmax转为概率
-    return softmax(torch.matmul(X.reshape((-1,W.shape[0])),W)+b)
+#激活函数
+def ReLU(X):
+    a=torch.zeros_like(X)
+    return torch.max(X,a)
 
-#6. 定义损失函数（交叉熵）
-y=torch.tensor([0,2])
-y_hat=torch.tensor([[0.1,0.3,0.6],[0.3,0.2,0.5]])
-
-def cross_entropy(y_hat,y):
-    return -torch.log(y_hat[range(len(y_hat)),y])
-
+#模型
 def accuracy(y_hat,y):
     if len(y_hat.shape)>1 and y_hat.shape[1]>1:
         y_hat=y_hat.argmax(axis=1)
     cmp=y_hat.type(y.dtype)==y
     return float(cmp.type(y.dtype).sum())
-
 def evaluate_accuracy(net,data_iter):
     '''计算指定数据集上的精度'''
     if isinstance(net,torch.nn.Module):
@@ -62,7 +51,10 @@ class Accumulator:  #@save
 
     def __getitem__(self, idx):
         return self.data[idx]
-
+def net(X):
+    X=X.reshape((-1,num_inputs))
+    H=ReLU(torch.matmul(X,W1)+b1)
+    return (torch.matmul(H,W2)+b2)
 def train_epoch_ch3(net, train_iter, loss, updater):  #@save
     """训练模型一个迭代周期（定义见第3章）"""
     # 将模型设置为训练模式
@@ -127,9 +119,8 @@ class Animator:  #@save
         self.config_axes()
         display.display(self.fig)
         display.clear_output(wait=True)
-
-
-
+#损失函数
+loss=nn.CrossEntropyLoss(reduction='none')
 
 def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):  #@save
     """训练模型（定义见第3章）"""
@@ -143,25 +134,8 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):  #@save
     assert train_loss < 0.5, train_loss
     assert train_acc <= 1 and train_acc > 0.7, train_acc
     assert test_acc <= 1 and test_acc > 0.7, test_acc
+num_epochs,lr=10,0.1
+updater=torch.optim.SGD(params,lr=lr)
+train_ch3(net,train_iter,test_iter,loss,num_epochs,updater)
 
-
-lr = 0.1
-
-def updater(batch_size):
-    return d2l.sgd([W, b], lr, batch_size)
-
-num_epochs = 10
-train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, updater)
-
-
-def predict_ch3(net, test_iter, n=6):  #@save
-    """预测标签（定义见第3章）"""
-    for X, y in test_iter:
-        break
-    trues = d2l.get_fashion_mnist_labels(y)
-    preds = d2l.get_fashion_mnist_labels(net(X).argmax(axis=1))
-    titles = [true +'\n' + pred for true, pred in zip(trues, preds)]
-    d2l.show_images(
-        X[0:n].reshape((n, 28, 28)), 1, n, titles=titles[0:n])
-
-predict_ch3(net, test_iter)
+plt.show()
