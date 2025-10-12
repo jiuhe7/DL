@@ -2,7 +2,7 @@
 from IPython import display# 用于IPython环境中的动态显示（如动画更新）
 import torch
 from d2l import torch as d2l
-
+import matplotlib.pyplot as plt
 # 2. 加载数据集
 batch_size=256
 train_iter,test_iter=d2l.load_data_fashion_mnist(batch_size)
@@ -32,17 +32,17 @@ y_hat=torch.tensor([[0.1,0.3,0.6],[0.3,0.2,0.5]])
 
 def cross_entropy(y_hat,y):
     return -torch.log(y_hat[range(len(y_hat)),y])
-
+# 7. 精度计算
 def accuracy(y_hat,y):
     if len(y_hat.shape)>1 and y_hat.shape[1]>1:
         y_hat=y_hat.argmax(axis=1)
     cmp=y_hat.type(y.dtype)==y
     return float(cmp.type(y.dtype).sum())
-
+# 8. 评估精度函数
 def evaluate_accuracy(net,data_iter):
     '''计算指定数据集上的精度'''
     if isinstance(net,torch.nn.Module):
-        net.eval()
+        net.eval() # 切换到评估模式（关闭dropout、批量归一化的统计更新等）
     metric=Accumulator(2)
     with torch.no_grad():
         for X,y in data_iter:
@@ -62,7 +62,7 @@ class Accumulator:  #@save
 
     def __getitem__(self, idx):
         return self.data[idx]
-
+# 9. 训练一个迭代周期（epoch
 def train_epoch_ch3(net, train_iter, loss, updater):  #@save
     """训练模型一个迭代周期（定义见第3章）"""
     # 将模型设置为训练模式
@@ -87,7 +87,7 @@ def train_epoch_ch3(net, train_iter, loss, updater):  #@save
     # 返回训练损失和训练精度
     return metric[0] / metric[2], metric[1] / metric[2]
 
-
+# 10. Animator 类
 class Animator:  #@save
     """在动画中绘制数据"""
     def __init__(self, xlabel=None, ylabel=None, legend=None, xlim=None,
@@ -130,7 +130,7 @@ class Animator:  #@save
 
 
 
-
+# 11. 训练主函数
 def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):  #@save
     """训练模型（定义见第3章）"""
     animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
@@ -144,7 +144,7 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):  #@save
     assert train_acc <= 1 and train_acc > 0.7, train_acc
     assert test_acc <= 1 and test_acc > 0.7, test_acc
 
-
+# 12. 优化器与训练执行
 lr = 0.1
 
 def updater(batch_size):
@@ -152,7 +152,7 @@ def updater(batch_size):
 
 num_epochs = 10
 train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, updater)
-
+# 13. 预测函数
 
 def predict_ch3(net, test_iter, n=6):  #@save
     """预测标签（定义见第3章）"""
@@ -165,3 +165,4 @@ def predict_ch3(net, test_iter, n=6):  #@save
         X[0:n].reshape((n, 28, 28)), 1, n, titles=titles[0:n])
 
 predict_ch3(net, test_iter)
+plt.show()
