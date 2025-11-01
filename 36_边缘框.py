@@ -8,13 +8,18 @@ d2l.plt.imshow(img);
 
 d2l.plt.show()
 #@save
+'''边界框有两种常用格式：
+角点格式：(左上 x, 左上 y, 右下 x, 右下 y)（图像左上角为原点，x 轴向右，y 轴向下）
+中心格式：(中心 x, 中心 y, 宽度，高度)'''
 def box_corner_to_center(boxes):
     """从（左上，右下）转换到（中间，宽度，高度）"""
+    # [x1, y1, x2, y2]（左上 x、左上 y、右下 x、右下 y）
     x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
     cx = (x1 + x2) / 2
     cy = (y1 + y2) / 2
     w = x2 - x1
     h = y2 - y1
+    # 把每个边界框的 “中心 x、中心 y、宽度、高度” 四个参数打包成一个向量，最终形成一个包含所有边界框的二维张量。
     boxes = torch.stack((cx, cy, w, h), axis=-1)
     return boxes
 
